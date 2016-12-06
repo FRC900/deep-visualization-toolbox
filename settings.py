@@ -39,6 +39,9 @@ input_updater_sleep_after_read_frame = locals().get('input_updater_sleep_after_r
 # Input updater thread die after this many seconds without a heartbeat. Useful during debugging to avoid other threads running after main thread has crashed.
 input_updater_heartbeat_required = locals().get('input_updater_heartbeat_required', 15.0)
 
+# File name to open for ZCA weights
+input_updater_zca_weights = locals().get('input_updater_zca_weights', None)
+
 # How long to sleep while waiting for key presses and redraws. Recommendation: 1 (min: 1)
 main_loop_sleep_ms = locals().get('main_loop_sleep_ms', 1)
 

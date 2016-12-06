@@ -196,7 +196,7 @@ class LiveVis(object):
 
             if is_new_frame:
                 with WithTimer('LiveVis.display_frame', quiet = self.debug_level < 1):
-                    self.display_frame(latest_frame_data)
+                    self.display_frame(self.input_updater.get_display_frame(latest_frame_data))
                 imshow_needed = True
 
             do_handle_input = (ii == 0 or

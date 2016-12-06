@@ -2,6 +2,7 @@ import os
 import cv2
 import re
 import time
+import numpy as np
 from threading import RLock
 
 from codependent_thread import CodependentThread
@@ -37,6 +38,12 @@ class InputImageFetcher(CodependentThread):
         self.latest_static_frame = None
         self.static_file_idx = None
         self.static_file_idx_increment = 0
+
+        if settings.input_updater_zca_weights is None:
+                self.zca_matrix = None
+        else:
+                print 'Loading ZCA weights'
+                self.zca_matrix = np.loadtxt(settings.input_updater_zca_weights)
         
     def bind_camera(self):
         # Due to OpenCV limitations, this should be called from the main thread
@@ -133,7 +140,26 @@ class InputImageFetcher(CodependentThread):
         is not valid.
         '''
         with self.lock:
-            return (self.latest_frame_idx, self.latest_frame_data)
+            if self.zca_matrix is not None:
+                    rsz = cv2.resize(self.latest_frame_data, (24,24), interpolation = cv2.INTER_AREA)
+                    mean   = np.mean(rsz, axis=(0,1))
+                    stddev = np.std(rsz, axis=(0,1))
+                    gcn = (rsz - mean) / stddev
+
+                    flat = gcn.flatten(0)
+                    flat = flat.reshape(1, len(flat))
+
+                    whitened = np.dot(self.zca_matrix, flat.T)
+                    img = whitened.reshape([24,24,3])
+                    return (self.latest_frame_idx, img)
+            else :
+                    return (self.latest_frame_idx, self.latest_frame_data)
+    def get_display_frame(self, img):
+        if self.zca_matrix is not None:
+            img = img * 60
+            img = img + 127.5
+        return img
+
 
     def increment_static_file_idx(self, amount = 1):
         with self.lock:
